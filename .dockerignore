@@ -1,0 +1,42 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.egg-info
+.eggs
+dist
+build
+
+# Virtual environments
+venv
+.venv
+env
+
+# Environment & secrets
+.env
+.env.*
+
+# Django local data
+db.sqlite3
+db.sqlite3-journal
+staticfiles
+media
+
+# IDE & OS
+.idea
+.vscode
+*.swp
+.DS_Store
+Thumbs.db
+
+# Docs & misc
+*.md
+!README.md
+academic-projects-marketplace-spec.md
+
+# Docker (not needed inside image)
+docker-compose.yml

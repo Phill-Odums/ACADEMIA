@@ -1,0 +1,34 @@
+# Render Blueprint — deploy with: connect repo → New Blueprint → select render.yaml
+# Docs: https://render.com/docs/infrastructure-as-code
+
+services:
+  - type: web
+    name: scholarvault
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /
+    disk:
+      name: scholarvault-media
+      mountPath: /app/media
+      sizeGB: 1
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: PAYSTACK_DEMO_MODE
+        value: "False"
+      - key: WEB_CONCURRENCY
+        value: "2"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: scholarvault-db
+          property: connectionString
+
+databases:
+  - name: scholarvault-db
+    plan: free
+    databaseName: scholarvault
+    user: scholarvault

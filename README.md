@@ -17,7 +17,8 @@ A Django web application for discovering, previewing, and purchasing defended un
 | Layer | Technology |
 |-------|------------|
 | Backend | Django 5.x |
-| Database | SQLite (default) |
+| Database | SQLite (local) / PostgreSQL (Docker & Render) |
+| Server | Gunicorn + WhiteNoise |
 | Frontend | Tailwind CSS (CDN), Lucide icons |
 | PDF preview | PDF.js, PyMuPDF |
 | Payments | Paystack API |
@@ -38,7 +39,11 @@ Academic_project_market_palce/
 ├── media/             # Uploaded project files (gitignored)
 ├── manage.py
 ├── requirements.txt
-└── seed_data.py       # Sample departments, users, and projects
+├── Dockerfile           # Production container image
+├── docker-compose.yml   # Local Docker + PostgreSQL
+├── render.yaml          # Render Blueprint (IaC)
+├── entrypoint.sh        # Migrate, collectstatic, start Gunicorn
+└── seed_data.py         # Sample departments, users, and projects
 ```
 
 ## User Roles
@@ -125,16 +130,87 @@ Academic_project_market_palce/
 
    Open [http://127.0.0.1:8000](http://127.0.0.1:8000) in your browser.
 
+## Deploying to Render (Docker)
+
+This project is configured for containerized deployment on [Render](https://render.com) using the included `Dockerfile` and `render.yaml` Blueprint.
+
+### What gets deployed
+
+| Component | Details |
+|-----------|---------|
+| **Web service** | Docker container running Gunicorn |
+| **Database** | PostgreSQL (via `DATABASE_URL`) |
+| **Static files** | WhiteNoise (`collectstatic` on startup) |
+| **Media uploads** | Render persistent disk mounted at `/app/media` |
+
+### Option A — Blueprint (recommended)
+
+1. Push this repo to GitHub/GitLab.
+2. In Render: **New → Blueprint** → connect the repo.
+3. Render reads `render.yaml` and creates the web service + PostgreSQL database.
+4. Add these environment variables on the web service dashboard:
+
+   | Variable | Value |
+   |----------|-------|
+   | `PAYSTACK_PUBLIC_KEY` | Your Paystack public key |
+   | `PAYSTACK_SECRET_KEY` | Your Paystack secret key |
+   | `PAYSTACK_DEMO_MODE` | `False` for live payments |
+
+5. After the first deploy, open the **Shell** on Render and create an admin user:
+
+   ```bash
+   python manage.py createsuperuser
+   ```
+
+### Option B — Manual Docker web service
+
+1. **New → Web Service** → connect your repo.
+2. Set **Runtime** to **Docker**.
+3. Create a **PostgreSQL** database and link it (set `DATABASE_URL` on the web service).
+4. Add a **persistent disk** mounted at `/app/media` (required for uploaded project files).
+5. Set environment variables:
+
+   ```env
+   DJANGO_SECRET_KEY=<long-random-string>
+   DJANGO_DEBUG=False
+   PAYSTACK_PUBLIC_KEY=pk_live_...
+   PAYSTACK_SECRET_KEY=sk_live_...
+   PAYSTACK_DEMO_MODE=False
+   ```
+
+   Render automatically sets `PORT`, `RENDER_EXTERNAL_URL`, and `RENDER_EXTERNAL_HOSTNAME`.
+
+### Test locally with Docker
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+App runs at [http://localhost:8000](http://localhost:8000) with PostgreSQL.
+
+### Production notes
+
+- **Migrations** run automatically on container start via `entrypoint.sh`.
+- **Static files** are collected on each deploy; served by WhiteNoise.
+- **Media files** persist only if the Render disk is attached at `/app/media`.
+- Set `PAYSTACK_DEMO_MODE=False` in production for real payments.
+- Free-tier Render services spin down after inactivity (cold starts ~30s).
+
 ## Environment Variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `DJANGO_SECRET_KEY` | Django secret key | Development fallback in settings |
 | `DJANGO_DEBUG` | Enable debug mode | `True` |
-| `DJANGO_ALLOWED_HOSTS` | Comma-separated allowed hosts | `*` |
+| `DJANGO_ALLOWED_HOSTS` | Comma-separated allowed hosts | `localhost,127.0.0.1` |
+| `DATABASE_URL` | PostgreSQL connection string (Docker/Render) | SQLite locally |
 | `PAYSTACK_PUBLIC_KEY` | Paystack public API key | Placeholder |
 | `PAYSTACK_SECRET_KEY` | Paystack secret API key | Placeholder |
 | `PAYSTACK_DEMO_MODE` | Simulate payments locally | `True` |
+| `PORT` | HTTP port (set by Render/Docker) | `8000` |
+| `RENDER_EXTERNAL_URL` | Full app URL (set by Render) | — |
+| `RENDER_EXTERNAL_HOSTNAME` | App hostname (set by Render) | — |
 
 ## Main URLs
 
