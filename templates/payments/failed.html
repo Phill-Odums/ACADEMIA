@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Payment Unsuccessful | ScholarVault{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto px-4 py-16">
+    <div class="auth-card text-center space-y-6">
+        <div class="w-14 h-14 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto">
+            <i data-lucide="alert-triangle" class="w-7 h-7"></i>
+        </div>
+
+        <div class="space-y-2">
+            <h1 class="font-heading text-xl font-bold text-navy">Payment Incomplete</h1>
+            <p class="text-sm text-slate-600">
+                The transaction for <strong>{{ purchase.material.title }}</strong> was not completed or could not be verified.
+            </p>
+        </div>
+
+        <div class="p-3 rounded-lg bg-slate-50 text-xs text-slate-500 font-mono border border-slate-200">
+            Reference: {{ purchase.paystack_reference }}
+        </div>
+
+        <div class="flex items-center justify-center gap-3">
+            <a href="{% url 'projects:detail' purchase.material.pk %}" class="btn btn-primary">Retry Payment</a>
+            <a href="{% url 'home' %}" class="btn btn-secondary">Home</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

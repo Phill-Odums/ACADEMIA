@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block title %}Account Profile | ScholarVault{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="card p-8 space-y-6">
+
+        <div class="flex items-center gap-4 pb-6 border-b border-slate-100">
+            <div class="w-12 h-12 rounded-lg bg-navy text-white flex items-center justify-center font-bold text-lg">
+                {{ user.first_name|default:user.username|slice:":1"|upper }}
+            </div>
+            <div>
+                <h1 class="font-heading text-xl font-bold text-navy">{{ user.get_full_name|default:user.username }}</h1>
+                <p class="text-sm text-slate-500">{{ user.email }} &middot; <span class="text-brand-700 font-semibold uppercase text-xs">{{ user.get_role_display|default:user.role }}</span></p>
+            </div>
+        </div>
+
+        <form method="POST" class="space-y-4">
+            {% csrf_token %}
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="form-label">First Name</label>
+                    {{ form.first_name }}
+                </div>
+                <div>
+                    <label class="form-label">Last Name</label>
+                    {{ form.last_name }}
+                </div>
+            </div>
+
+            <div>
+                <label class="form-label">Email</label>
+                {{ form.email }}
+            </div>
+
+            <div>
+                <label class="form-label">Phone Number</label>
+                {{ form.phone_number }}
+            </div>
+
+            {% if user.role == 'STAFF' or user.is_superadmin_user %}
+            <div>
+                <label class="form-label">Department</label>
+                {{ form.department }}
+            </div>
+            {% endif %}
+
+            <div>
+                <label class="form-label">Academic Bio / Research Interests</label>
+                {{ form.bio }}
+            </div>
+
+            <div class="pt-4 flex justify-end">
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Faculty & Staff Portal | ScholarVault{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <p class="page-header-eyebrow">Faculty Workspace</p>
+                <h1 class="page-header-title">Staff Project Management</h1>
+                <p class="page-header-desc">
+                    {{ user.department.name|default:"General Academic Department" }} — Track uploads, revenue, and student interests.
+                </p>
+            </div>
+            <a href="{% url 'projects:upload' %}" class="btn btn-primary">
+                <i data-lucide="plus-circle" class="w-4 h-4"></i> Upload Project
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+
+    <!-- KPIs -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div class="kpi-card flex items-center justify-between">
+            <div>
+                <p class="kpi-label">My Uploads</p>
+                <p class="kpi-value">{{ total_materials }}</p>
+                <p class="text-xs text-emerald-700 font-medium mt-0.5">{{ approved_count }} approved · {{ pending_count }} pending</p>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-brand-50 text-brand-700 flex items-center justify-center">
+                <i data-lucide="folder-up" class="w-5 h-5"></i>
+            </div>
+        </div>
+        <div class="kpi-card flex items-center justify-between">
+            <div>
+                <p class="kpi-label">Sales Value</p>
+                <p class="kpi-value text-emerald-700">₦{{ total_revenue|intcomma }}</p>
+                <p class="text-xs text-slate-500 mt-0.5">{{ total_purchases }} purchases</p>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                <i data-lucide="wallet" class="w-5 h-5"></i>
+            </div>
+        </div>
+        <div class="kpi-card flex items-center justify-between">
+            <div>
+                <p class="kpi-label">Lead Inquiries</p>
+                <p class="kpi-value">{{ total_interests }}</p>
+                <p class="text-xs text-slate-500 mt-0.5">Interested researchers</p>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center">
+                <i data-lucide="bell" class="w-5 h-5"></i>
+            </div>
+        </div>
+        <div class="kpi-card flex items-center justify-between">
+            <div>
+                <p class="kpi-label">Downloads</p>
+                <p class="kpi-value">{{ total_downloads }}</p>
+                <p class="text-xs text-slate-500 mt-0.5">Full document fetches</p>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center">
+                <i data-lucide="download-cloud" class="w-5 h-5"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Materials Table -->
+    <div class="card overflow-hidden">
+        <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+                <h2 class="font-heading font-bold text-base text-navy">Your Uploaded Materials</h2>
+                <p class="text-sm text-slate-500">Monitor status, downloads, and lead interests</p>
+            </div>
+            <a href="{% url 'projects:upload' %}" class="btn btn-secondary btn-sm self-start">
+                <i data-lucide="plus" class="w-4 h-4"></i> Upload
+            </a>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Project</th>
+                        <th>Department</th>
+                        <th>Price</th>
+                        <th>Status</th>
+                        <th class="text-center">Interests</th>
+                        <th class="text-center">Sales</th>
+                        <th class="text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for material in materials %}
+                    <tr>
+                        <td class="max-w-xs">
+                            <a href="{% url 'projects:detail' material.pk %}" class="font-semibold text-navy hover:text-brand-700 line-clamp-1 block">
+                                {{ material.title }}
+                            </a>
+                            <p class="text-xs text-slate-400 mt-0.5 line-clamp-1">{{ material.abstract }}</p>
+                        </td>
+                        <td>{{ material.department.name }}</td>
+                        <td class="font-semibold">₦{{ material.price|intcomma }}</td>
+                        <td>
+                            {% if material.status == 'APPROVED' %}
+                            <span class="badge badge-success">Approved</span>
+                            {% elif material.status == 'PENDING' %}
+                            <span class="badge badge-warning">Pending Review</span>
+                            {% else %}
+                            <div class="group relative inline-block">
+                                <span class="badge badge-danger cursor-help">Rejected</span>
+                                {% if material.rejection_reason %}
+                                <div class="absolute bottom-full left-0 mb-2 hidden group-hover:block w-48 p-2 bg-navy text-white text-xs rounded-lg shadow-lg z-20">
+                                    {{ material.rejection_reason }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td class="text-center font-semibold">{{ material.total_interests }}</td>
+                        <td class="text-center font-semibold text-emerald-700">{{ material.total_purchases }}</td>
+                        <td class="text-right space-x-1.5 whitespace-nowrap">
+                            <a href="{% url 'projects:detail' material.pk %}" class="btn btn-secondary btn-sm">View</a>
+                            <a href="{% url 'projects:preview' material.pk %}" target="_blank" class="btn btn-secondary btn-sm">PDF</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="py-10 text-center text-slate-500 text-sm">
+                            No materials uploaded yet. Click "Upload" to get started.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

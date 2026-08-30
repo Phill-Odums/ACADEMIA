@@ -1,0 +1,215 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}ScholarVault — Academic Projects & Research Thesis Marketplace{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<section class="bg-white border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20">
+        <div class="max-w-3xl mx-auto text-center space-y-6">
+
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-50 border border-brand-100 text-brand-700 text-xs font-semibold">
+                <i data-lucide="book-marked" class="w-3.5 h-3.5"></i>
+                Verified Academic Repository
+            </div>
+
+            <h1 class="font-heading text-4xl sm:text-5xl font-bold text-navy leading-tight">
+                University Projects,<br>Ready for Your Research
+            </h1>
+
+            <p class="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
+                Access peer-reviewed, defended academic project documents and research materials.
+                Preview the first 2 pages free before purchasing via secure checkout.
+            </p>
+
+            <!-- Search -->
+            <div class="pt-2 max-w-xl mx-auto">
+                <form action="{% url 'projects:list' %}" method="GET"
+                    class="flex items-center gap-2 bg-white border border-slate-300 rounded-lg p-1.5 shadow-sm focus-within:border-brand-600 focus-within:ring-2 focus-within:ring-brand-100 transition">
+                    <i data-lucide="search" class="w-5 h-5 text-slate-400 ml-2 flex-shrink-0"></i>
+                    <input type="text" name="q" placeholder="Search by title, topic, or department…"
+                        class="flex-1 px-2 py-2.5 bg-transparent text-slate-800 placeholder:text-slate-400 text-sm focus:outline-none">
+                    <button type="submit" class="btn btn-primary btn-sm flex-shrink-0">
+                        Search
+                    </button>
+                </form>
+
+                <div class="flex flex-wrap items-center justify-center gap-2 mt-4 text-sm text-slate-500">
+                    <span class="font-medium text-slate-600">Popular:</span>
+                    <a href="{% url 'projects:list' %}?tag=AI" class="px-2.5 py-0.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 transition text-xs font-medium">AI & ML</a>
+                    <a href="{% url 'projects:list' %}?tag=Cybersecurity" class="px-2.5 py-0.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 transition text-xs font-medium">Cybersecurity</a>
+                    <a href="{% url 'projects:list' %}?tag=Renewable" class="px-2.5 py-0.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 transition text-xs font-medium">Renewable Energy</a>
+                    <a href="{% url 'projects:list' %}?tag=Fintech" class="px-2.5 py-0.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 transition text-xs font-medium">Fintech</a>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-3 gap-6 pt-10 max-w-lg mx-auto border-t border-slate-200 text-center">
+                <div>
+                    <div class="text-2xl sm:text-3xl font-bold text-navy">{{ total_projects|default:"120" }}+</div>
+                    <div class="text-xs text-slate-500 font-medium mt-0.5">Defended Projects</div>
+                </div>
+                <div class="border-x border-slate-200">
+                    <div class="text-2xl sm:text-3xl font-bold text-navy">{{ total_departments|default:"8" }}</div>
+                    <div class="text-xs text-slate-500 font-medium mt-0.5">Departments</div>
+                </div>
+                <div>
+                    <div class="text-2xl sm:text-3xl font-bold text-navy">{{ total_downloads|default:"350" }}+</div>
+                    <div class="text-xs text-slate-500 font-medium mt-0.5">Downloads</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- Departments -->
+<section class="py-14 bg-[#f7f8fa]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col md:flex-row md:items-end justify-between mb-8">
+            <div>
+                <p class="section-eyebrow">Browse by Faculty</p>
+                <h2 class="section-title">Academic Departments</h2>
+            </div>
+            <a href="{% url 'departments:list' %}" class="inline-flex items-center gap-1 text-sm font-semibold text-brand-700 hover:text-brand-800 mt-3 md:mt-0 transition">
+                View all departments
+                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {% for dept in departments %}
+            <a href="{% url 'departments:detail' dept.slug %}"
+                class="card card-hover p-5 flex flex-col justify-between group">
+                <div class="space-y-3">
+                    <div class="w-10 h-10 rounded-lg bg-brand-50 text-brand-700 flex items-center justify-center group-hover:bg-brand-700 group-hover:text-white transition">
+                        <i data-lucide="book-open" class="w-5 h-5"></i>
+                    </div>
+                    <h3 class="font-heading font-bold text-base text-navy group-hover:text-brand-700 transition">{{ dept.name }}</h3>
+                    <p class="text-sm text-slate-500 line-clamp-2 leading-relaxed">{{ dept.description|default:"Defended research projects and theses from accredited university scholars." }}</p>
+                </div>
+                <div class="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between text-sm">
+                    <span class="font-medium text-brand-700">{{ dept.mat_count|default:dept.approved_materials_count }} projects</span>
+                    <i data-lucide="arrow-right" class="w-4 h-4 text-slate-300 group-hover:text-brand-700 group-hover:translate-x-0.5 transition"></i>
+                </div>
+            </a>
+            {% empty %}
+            <div class="col-span-3 empty-state">
+                <p>No departments configured yet.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Featured Projects -->
+<section class="py-14 bg-white border-t border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col md:flex-row md:items-end justify-between mb-10">
+            <div>
+                <p class="section-eyebrow">Peer-Reviewed Repository</p>
+                <h2 class="section-title">Featured Academic Projects</h2>
+                <p class="text-sm text-slate-500 mt-1">Browse verified materials with free 2-page previews</p>
+            </div>
+            <a href="{% url 'projects:list' %}" class="btn btn-dark btn-sm mt-4 md:mt-0">
+                View full catalog
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for material in featured_materials %}
+            <div class="card card-hover flex flex-col justify-between overflow-hidden group">
+                <div class="p-5 space-y-3">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="badge badge-primary">{{ material.department.name }}</span>
+                        <span class="text-xs text-slate-400 font-medium">{{ material.year_defended }}</span>
+                    </div>
+
+                    <a href="{% url 'projects:detail' material.pk %}" class="block">
+                        <h3 class="font-heading font-bold text-base text-navy group-hover:text-brand-700 transition leading-snug line-clamp-2">
+                            {{ material.title }}
+                        </h3>
+                    </a>
+
+                    <p class="text-sm text-slate-600 leading-relaxed line-clamp-3">
+                        {{ material.abstract }}
+                    </p>
+
+                    {% if material.keyword_list %}
+                    <div class="flex flex-wrap gap-1.5 pt-1">
+                        {% for tag in material.keyword_list|slice:":3" %}
+                        <span class="px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-600">#{{ tag }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="p-5 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-3">
+                    <div>
+                        <span class="text-xs text-slate-400 font-medium block">Price</span>
+                        <span class="text-lg font-bold text-navy">₦{{ material.price|intcomma }}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <a href="{% url 'projects:detail' material.pk %}" class="btn btn-secondary btn-sm">
+                            <i data-lucide="eye" class="w-3.5 h-3.5"></i> Preview
+                        </a>
+                        <a href="{% url 'payments:initiate' material.pk %}" class="btn btn-primary btn-sm">
+                            Buy
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-span-3 card p-12 empty-state">
+                <div class="empty-state-icon">
+                    <i data-lucide="folder-open" class="w-6 h-6"></i>
+                </div>
+                <h3 class="font-heading font-bold text-navy text-base">No project materials yet</h3>
+                <p class="text-sm mt-1">Staff members can upload academic project documents anytime.</p>
+                {% if user.is_authenticated and user.is_staff_user %}
+                <a href="{% url 'projects:upload' %}" class="btn btn-primary btn-sm mt-4">
+                    <i data-lucide="upload" class="w-4 h-4"></i> Upload First Project
+                </a>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- How It Works -->
+<section class="py-14 bg-navy text-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-2xl mx-auto mb-12">
+            <p class="text-xs font-semibold uppercase tracking-wider text-blue-300">How It Works</p>
+            <h2 class="font-heading text-2xl sm:text-3xl font-bold text-white mt-1">From Upload to Download</h2>
+            <p class="text-sm text-slate-400 mt-2">A transparent pipeline designed for academic integrity</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
+            <div class="p-5 rounded-lg bg-white/5 border border-white/10">
+                <span class="w-7 h-7 rounded-md bg-brand-700 text-white flex items-center justify-center font-bold text-xs mb-3">1</span>
+                <h3 class="font-semibold text-sm mb-1.5">Faculty Upload</h3>
+                <p class="text-sm text-slate-400 leading-relaxed">Projects are uploaded by university faculty and verified by administrators.</p>
+            </div>
+            <div class="p-5 rounded-lg bg-white/5 border border-white/10">
+                <span class="w-7 h-7 rounded-md bg-brand-700 text-white flex items-center justify-center font-bold text-xs mb-3">2</span>
+                <h3 class="font-semibold text-sm mb-1.5">Free Preview</h3>
+                <p class="text-sm text-slate-400 leading-relaxed">Inspect the first 2 pages in high resolution before making a purchase decision.</p>
+            </div>
+            <div class="p-5 rounded-lg bg-white/5 border border-white/10">
+                <span class="w-7 h-7 rounded-md bg-brand-700 text-white flex items-center justify-center font-bold text-xs mb-3">3</span>
+                <h3 class="font-semibold text-sm mb-1.5">Secure Payment</h3>
+                <p class="text-sm text-slate-400 leading-relaxed">Checkout via Paystack with card, bank transfer, or USSD options.</p>
+            </div>
+            <div class="p-5 rounded-lg bg-white/5 border border-white/10">
+                <span class="w-7 h-7 rounded-md bg-brand-700 text-white flex items-center justify-center font-bold text-xs mb-3">4</span>
+                <h3 class="font-semibold text-sm mb-1.5">Instant Access</h3>
+                <p class="text-sm text-slate-400 leading-relaxed">Download the full document with permanent access in your personal library.</p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

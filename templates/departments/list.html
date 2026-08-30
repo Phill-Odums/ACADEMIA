@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %}Academic Departments | ScholarVault{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <p class="page-header-eyebrow">University Faculty</p>
+        <h1 class="page-header-title">Academic Departments</h1>
+        <p class="page-header-desc">Select a department to browse defended projects, thesis documents, and faculty research.</p>
+    </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        {% for dept in departments %}
+        <a href="{% url 'departments:detail' dept.slug %}" class="card card-hover p-5 flex flex-col justify-between group">
+            <div class="space-y-3">
+                <div class="w-10 h-10 rounded-lg bg-brand-50 text-brand-700 flex items-center justify-center group-hover:bg-brand-700 group-hover:text-white transition">
+                    <i data-lucide="book-open" class="w-5 h-5"></i>
+                </div>
+                <h3 class="font-heading font-bold text-base text-navy group-hover:text-brand-700 transition">{{ dept.name }}</h3>
+                <p class="text-sm text-slate-500 line-clamp-3 leading-relaxed">{{ dept.description|default:"Defended university projects, peer-reviewed theses, and departmental research materials." }}</p>
+            </div>
+            <div class="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between text-sm">
+                <span class="font-medium text-brand-700">{{ dept.approved_materials_count }} projects</span>
+                <i data-lucide="arrow-right" class="w-4 h-4 text-slate-300 group-hover:text-brand-700 group-hover:translate-x-0.5 transition"></i>
+            </div>
+        </a>
+        {% empty %}
+        <div class="col-span-3 empty-state">
+            <p>No departments available yet.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

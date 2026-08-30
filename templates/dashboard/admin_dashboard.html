@@ -1,0 +1,222 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Super Admin Platform Hub | ScholarVault{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <p class="page-header-eyebrow">Super Administrator</p>
+                <h1 class="page-header-title">Platform Oversight</h1>
+                <p class="page-header-desc">Review pending submissions, track revenue, and manage departmental repositories.</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <a href="/admin/" target="_blank" class="btn btn-secondary btn-sm">
+                    <i data-lucide="database" class="w-4 h-4"></i> Django Admin
+                </a>
+                <a href="{% url 'projects:upload' %}" class="btn btn-primary btn-sm">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i> Upload Project
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+
+    <!-- KPIs -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div class="kpi-card flex items-center justify-between">
+            <div>
+                <p class="kpi-label">Total Materials</p>
+                <p class="kpi-value">{{ total_projects }}</p>
+                <p class="text-xs text-emerald-700 font-medium mt-0.5">{{ approved_count }} approved · {{ pending_count }} pending</p>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-brand-50 text-brand-700 flex items-center justify-center">
+                <i data-lucide="files" class="w-5 h-5"></i>
+            </div>
+        </div>
+        <div class="kpi-card flex items-center justify-between">
+            <div>
+                <p class="kpi-label">Gross Revenue</p>
+                <p class="kpi-value text-emerald-700">₦{{ total_revenue|intcomma }}</p>
+                <p class="text-xs text-slate-500 mt-0.5">{{ total_purchases }} sales</p>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                <i data-lucide="badge-dollar-sign" class="w-5 h-5"></i>
+            </div>
+        </div>
+        <div class="kpi-card flex items-center justify-between">
+            <div>
+                <p class="kpi-label">Lead Inquiries</p>
+                <p class="kpi-value">{{ total_interests }}</p>
+                <p class="text-xs text-slate-500 mt-0.5">Recorded interests</p>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center">
+                <i data-lucide="users" class="w-5 h-5"></i>
+            </div>
+        </div>
+        <div class="kpi-card flex items-center justify-between">
+            <div>
+                <p class="kpi-label">Downloads</p>
+                <p class="kpi-value">{{ total_downloads }}</p>
+                <p class="text-xs text-slate-500 mt-0.5">Document fetches</p>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center">
+                <i data-lucide="download" class="w-5 h-5"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Review Queue -->
+    <div class="card overflow-hidden border-amber-200">
+        <div class="p-5 bg-amber-50 border-b border-amber-200 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-lg bg-amber-500 text-white flex items-center justify-center">
+                    <i data-lucide="clock" class="w-4 h-4"></i>
+                </div>
+                <div>
+                    <h2 class="font-heading font-bold text-base text-navy">Submission Review Queue</h2>
+                    <p class="text-sm text-slate-600">Pending projects requiring quality review</p>
+                </div>
+            </div>
+            <span class="badge badge-warning">{{ pending_count }} pending</span>
+        </div>
+
+        {% if pending_materials %}
+        <div class="overflow-x-auto">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Project</th>
+                        <th>Department</th>
+                        <th>Staff</th>
+                        <th>Price</th>
+                        <th>Submitted</th>
+                        <th class="text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in pending_materials %}
+                    <tr>
+                        <td class="max-w-xs">
+                            <span class="font-semibold text-navy block line-clamp-1">{{ item.title }}</span>
+                            <p class="text-xs text-slate-500 line-clamp-1 mt-0.5">{{ item.abstract }}</p>
+                        </td>
+                        <td>{{ item.department.name }}</td>
+                        <td class="font-medium text-brand-700">{{ item.uploaded_by.get_full_name|default:item.uploaded_by.username }}</td>
+                        <td class="font-semibold">₦{{ item.price|intcomma }}</td>
+                        <td class="text-slate-400">{{ item.created_at|date:"M d, Y" }}</td>
+                        <td class="text-right space-x-1.5 whitespace-nowrap">
+                            <a href="{% url 'projects:preview' item.pk %}" target="_blank" class="btn btn-secondary btn-sm">Preview</a>
+                            <form action="{% url 'analytics:approve_material' item.pk %}" method="POST" class="inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-primary btn-sm">Approve</button>
+                            </form>
+                            <button type="button" onclick="openRejectModal({{ item.pk }}, '{{ item.title|escapejs }}')" class="btn btn-sm bg-red-50 text-red-700 border-red-200 hover:bg-red-100">Reject</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-10 empty-state">
+            <div class="empty-state-icon">
+                <i data-lucide="check" class="w-5 h-5"></i>
+            </div>
+            <p class="font-semibold text-navy">Review queue is clear</p>
+            <p class="text-sm mt-1">All submissions have been reviewed.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- All Materials -->
+    <div class="card overflow-hidden">
+        <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+            <div>
+                <h2 class="font-heading font-bold text-base text-navy">All Platform Materials</h2>
+                <p class="text-sm text-slate-500">Master inventory across all departments</p>
+            </div>
+            <span class="text-sm text-slate-500">{{ all_materials.count }} records</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Department</th>
+                        <th>Author</th>
+                        <th>Status</th>
+                        <th>Price</th>
+                        <th class="text-center">Interests</th>
+                        <th class="text-center">Sales</th>
+                        <th class="text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for material in all_materials|slice:":25" %}
+                    <tr>
+                        <td class="max-w-xs font-semibold text-navy line-clamp-1">
+                            <a href="{% url 'projects:detail' material.pk %}" class="hover:text-brand-700">{{ material.title }}</a>
+                        </td>
+                        <td>{{ material.department.name }}</td>
+                        <td class="text-slate-600">{{ material.uploaded_by.username }}</td>
+                        <td>
+                            {% if material.status == 'APPROVED' %}
+                            <span class="badge badge-success">Approved</span>
+                            {% elif material.status == 'PENDING' %}
+                            <span class="badge badge-warning">Pending</span>
+                            {% else %}
+                            <span class="badge badge-danger">Rejected</span>
+                            {% endif %}
+                        </td>
+                        <td class="font-semibold">₦{{ material.price|intcomma }}</td>
+                        <td class="text-center font-semibold">{{ material.total_interests }}</td>
+                        <td class="text-center font-semibold text-emerald-700">{{ material.total_purchases }}</td>
+                        <td class="text-right space-x-1 whitespace-nowrap">
+                            <a href="{% url 'projects:detail' material.pk %}" class="btn btn-secondary btn-sm">View</a>
+                            <a href="/admin/projects/projectmaterial/{{ material.pk }}/change/" target="_blank" class="btn btn-sm bg-brand-50 text-brand-700 border-brand-100 hover:bg-brand-100">Edit</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Reject Modal -->
+<div id="reject-modal" class="fixed inset-0 z-50 bg-navy/50 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="card max-w-md w-full p-6 relative">
+        <button onclick="closeRejectModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1">
+            <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+        <div class="flex items-center gap-3 mb-4">
+            <div class="w-9 h-9 rounded-lg bg-red-50 text-red-600 flex items-center justify-center">
+                <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+            </div>
+            <div>
+                <h3 class="font-heading font-bold text-base text-navy">Reject Submission</h3>
+                <p class="text-sm text-slate-500">Provide feedback to the staff member</p>
+            </div>
+        </div>
+        <p class="text-sm text-slate-600 mb-4">
+            Rejecting <strong id="reject-project-title">this project</strong> will keep it hidden from the public catalog.
+        </p>
+        <form id="reject-form" method="POST" class="space-y-4">
+            {% csrf_token %}
+            <div>
+                <label class="form-label">Reason for Rejection</label>
+                <textarea name="rejection_reason" rows="3" required placeholder="e.g. Missing literature review section…" class="form-control text-sm"></textarea>
+            </div>
+            <div class="flex items-center justify-end gap-2">
+                <button type="button" onclick="closeRejectModal()" class="btn btn-secondary">Cancel</button>
+                <button type="submit" class="btn btn-sm bg-red-600 text-white border-red-600 hover:bg-red-700">Confirm Rejection</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

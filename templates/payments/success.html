@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Payment Successful | ScholarVault{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto px-4 py-16">
+    <div class="auth-card text-center space-y-6">
+
+        <div class="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
+            <i data-lucide="check-circle" class="w-8 h-8"></i>
+        </div>
+
+        <div class="space-y-2">
+            <span class="badge badge-success">Payment Confirmed</span>
+            <h1 class="font-heading text-2xl font-bold text-navy">Access Granted</h1>
+            <p class="text-sm text-slate-600">
+                Your payment for <strong>{{ purchase.material.title }}</strong> was successful. You can now download the full document.
+            </p>
+        </div>
+
+        <div class="card p-5 text-left space-y-2.5 text-sm max-w-sm mx-auto">
+            <div class="flex justify-between">
+                <span class="text-slate-500">Reference</span>
+                <span class="font-mono font-medium text-navy text-xs">{{ purchase.paystack_reference }}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-slate-500">Amount Paid</span>
+                <span class="font-semibold text-emerald-700">₦{{ purchase.amount_paid|intcomma }}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-slate-500">Department</span>
+                <span class="font-medium text-navy">{{ purchase.material.department.name }}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-slate-500">Date</span>
+                <span class="font-medium text-navy">{{ purchase.paid_at|default:purchase.created_at|date:"M d, Y H:i" }}</span>
+            </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+            <a href="{% url 'projects:download' purchase.material.pk %}" class="btn btn-primary w-full sm:w-auto">
+                <i data-lucide="download" class="w-4 h-4"></i> Download Now
+            </a>
+            <a href="{% url 'payments:library' %}" class="btn btn-secondary w-full sm:w-auto">
+                <i data-lucide="bookmark" class="w-4 h-4"></i> My Library
+            </a>
+        </div>
+
+        <div class="pt-2 border-t border-slate-100">
+            <a href="{% url 'payments:receipt' purchase.paystack_reference %}" class="text-sm text-brand-700 hover:underline font-medium" target="_blank">
+                Print Receipt &rarr;
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

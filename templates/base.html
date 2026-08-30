@@ -1,0 +1,305 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="h-full antialiased">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Academic Projects Marketplace | Defended Research & Project Repository{% endblock %}</title>
+    <meta name="description" content="{% block description %}Discover, preview, and access peer-reviewed defended academic projects, theses, and research documents across university departments.{% endblock %}">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: {
+                            DEFAULT: '#0f2744',
+                            light: '#1a3a5c',
+                            50: '#f0f4f8',
+                            100: '#d9e2ec',
+                            800: '#1a3a5c',
+                            900: '#0f2744',
+                        },
+                        brand: {
+                            DEFAULT: '#1d4ed8',
+                            hover: '#1e40af',
+                            muted: '#eff6ff',
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        heading: ['Libre Baskerville', 'Georgia', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Libre+Baskerville:wght@400;700&display=swap" rel="stylesheet">
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="flex flex-col min-h-full bg-[#f7f8fa] text-slate-800">
+
+    <!-- Notice Bar -->
+    <div class="notice-bar">
+        <div class="max-w-7xl mx-auto flex items-center justify-center gap-2">
+            <i data-lucide="shield-check" class="w-3.5 h-3.5 text-blue-300"></i>
+            <span><strong>Verified & Defended</strong> — All documents are faculty-reviewed. Preview the first 2 pages free.</span>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <header class="sticky top-0 z-40 bg-white border-b border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+
+                <!-- Logo -->
+                <div class="flex items-center gap-8">
+                    <a href="{% url 'home' %}" class="flex items-center gap-2.5 group">
+                        <div class="w-9 h-9 rounded-lg bg-navy flex items-center justify-center text-white">
+                            <i data-lucide="graduation-cap" class="w-5 h-5"></i>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="font-heading font-bold text-lg text-navy leading-none">ScholarVault</span>
+                            <span class="text-[10px] font-medium uppercase tracking-widest text-slate-400 mt-0.5">Academic Marketplace</span>
+                        </div>
+                    </a>
+
+                    <nav class="hidden md:flex items-center gap-0.5">
+                        <a href="{% url 'home' %}" class="nav-link">Home</a>
+                        <a href="{% url 'projects:list' %}" class="nav-link">Projects</a>
+                        <a href="{% url 'departments:list' %}" class="nav-link">Departments</a>
+                        {% if user.is_authenticated and user.role == 'BUYER' or user.purchases.exists %}
+                        <a href="{% url 'payments:library' %}" class="nav-link flex items-center gap-1.5">
+                            <i data-lucide="bookmark" class="w-3.5 h-3.5"></i> My Library
+                        </a>
+                        {% endif %}
+                    </nav>
+                </div>
+
+                <!-- Search -->
+                <div class="hidden lg:flex flex-1 max-w-sm mx-8">
+                    <form action="{% url 'projects:list' %}" method="GET" class="w-full relative">
+                        <input type="text" name="q" placeholder="Search projects, topics, keywords…" value="{{ request.GET.q|default:'' }}"
+                               class="form-control pl-9 py-2 text-sm">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                    </form>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex items-center gap-2">
+                    {% if user.is_authenticated %}
+
+                        {% if user.is_staff_user %}
+                        <a href="{% url 'projects:upload' %}" class="hidden sm:inline-flex btn btn-secondary btn-sm">
+                            <i data-lucide="upload-cloud" class="w-3.5 h-3.5"></i>
+                            Upload
+                        </a>
+                        {% endif %}
+
+                        {% if user.role == 'STAFF' and not user.is_superadmin_user %}
+                        <a href="{% url 'analytics:staff_dashboard' %}" class="hidden sm:inline-flex btn btn-secondary btn-sm">
+                            <i data-lucide="layout-dashboard" class="w-3.5 h-3.5"></i>
+                            Staff Portal
+                        </a>
+                        {% endif %}
+
+                        {% if user.is_superadmin_user %}
+                        <a href="{% url 'analytics:admin_dashboard' %}" class="hidden sm:inline-flex btn btn-dark btn-sm">
+                            <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+                            Admin
+                        </a>
+                        {% endif %}
+
+                        <!-- Profile Dropdown -->
+                        <div class="relative group">
+                            <button class="flex items-center gap-2 p-1 rounded-lg hover:bg-slate-100 transition focus:outline-none">
+                                <div class="w-8 h-8 rounded-full bg-navy text-white flex items-center justify-center font-semibold text-xs">
+                                    {{ user.first_name|default:user.username|slice:":1"|upper }}
+                                </div>
+                                <span class="hidden md:inline text-sm font-medium text-slate-700">{{ user.first_name|default:user.username }}</span>
+                                <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 hidden md:inline"></i>
+                            </button>
+
+                            <div class="absolute right-0 mt-1 w-56 bg-white rounded-lg shadow-lg border border-slate-200 py-1.5 hidden group-hover:block z-50">
+                                <div class="px-4 py-2.5 border-b border-slate-100">
+                                    <p class="text-sm font-semibold text-slate-900">{{ user.get_full_name|default:user.username }}</p>
+                                    <p class="text-xs text-slate-500 truncate">{{ user.email }}</p>
+                                    <span class="inline-block mt-1.5 px-2 py-0.5 text-[10px] font-semibold uppercase rounded badge badge-primary">
+                                        {{ user.get_role_display|default:user.role }}
+                                    </span>
+                                </div>
+                                <a href="{% url 'payments:library' %}" class="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition">
+                                    <i data-lucide="folder-down" class="w-4 h-4 text-slate-400"></i> My Library
+                                </a>
+                                {% if user.is_staff_user %}
+                                <a href="{% url 'analytics:staff_dashboard' %}" class="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition">
+                                    <i data-lucide="layout-grid" class="w-4 h-4 text-slate-400"></i> Staff Dashboard
+                                </a>
+                                {% endif %}
+                                {% if user.is_superadmin_user %}
+                                <a href="{% url 'analytics:admin_dashboard' %}" class="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition">
+                                    <i data-lucide="shield-alert" class="w-4 h-4 text-slate-400"></i> Admin Hub
+                                </a>
+                                <a href="/admin/" class="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition" target="_blank">
+                                    <i data-lucide="settings" class="w-4 h-4 text-slate-400"></i> Django Admin
+                                </a>
+                                {% endif %}
+                                <a href="{% url 'accounts:profile' %}" class="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition">
+                                    <i data-lucide="user" class="w-4 h-4 text-slate-400"></i> Account Settings
+                                </a>
+                                <div class="border-t border-slate-100 my-1"></div>
+                                <a href="{% url 'accounts:logout' %}" class="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition">
+                                    <i data-lucide="log-out" class="w-4 h-4"></i> Sign Out
+                                </a>
+                            </div>
+                        </div>
+
+                    {% else %}
+                        <a href="{% url 'accounts:login' %}" class="btn btn-secondary btn-sm hidden sm:inline-flex">Sign In</a>
+                        <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-sm">Get Started</a>
+                    {% endif %}
+
+                    <button id="mobile-menu-btn" onclick="toggleMobileMenu()" class="md:hidden p-2 rounded-lg text-slate-600 hover:bg-slate-100">
+                        <i data-lucide="menu" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-5 space-y-1">
+            <form action="{% url 'projects:list' %}" method="GET" class="w-full relative mb-3">
+                <input type="text" name="q" placeholder="Search projects…" value="{{ request.GET.q|default:'' }}"
+                       class="form-control pl-9 py-2 text-sm">
+                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+            </form>
+            <a href="{% url 'home' %}" class="block px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50">Home</a>
+            <a href="{% url 'projects:list' %}" class="block px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50">Projects</a>
+            <a href="{% url 'departments:list' %}" class="block px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50">Departments</a>
+            {% if user.is_authenticated %}
+                <a href="{% url 'payments:library' %}" class="block px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50">My Library</a>
+                {% if user.is_staff_user %}
+                <a href="{% url 'projects:upload' %}" class="block px-3 py-2 rounded-lg text-sm font-medium text-brand-700 hover:bg-brand-50">Upload Project</a>
+                <a href="{% url 'analytics:staff_dashboard' %}" class="block px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50">Staff Portal</a>
+                {% endif %}
+                {% if user.is_superadmin_user %}
+                <a href="{% url 'analytics:admin_dashboard' %}" class="block px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50">Admin Hub</a>
+                {% endif %}
+                <a href="{% url 'accounts:profile' %}" class="block px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50">Profile</a>
+                <a href="{% url 'accounts:logout' %}" class="block px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50">Sign Out</a>
+            {% else %}
+                <div class="pt-2 flex flex-col gap-2">
+                    <a href="{% url 'accounts:login' %}" class="btn btn-secondary w-full">Sign In</a>
+                    <a href="{% url 'accounts:register' %}" class="btn btn-primary w-full">Create Account</a>
+                </div>
+            {% endif %}
+        </div>
+    </header>
+
+    <!-- Flash Messages -->
+    {% if messages %}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 w-full">
+        {% for message in messages %}
+        <div class="alert-box flex items-center justify-between p-3.5 mb-2 rounded-lg border text-sm font-medium transition
+            {% if message.tags == 'success' %} bg-emerald-50 text-emerald-800 border-emerald-200
+            {% elif message.tags == 'error' %} bg-red-50 text-red-800 border-red-200
+            {% elif message.tags == 'warning' %} bg-amber-50 text-amber-800 border-amber-200
+            {% else %} bg-brand-50 text-brand-800 border-brand-100 {% endif %}">
+            <div class="flex items-center gap-2">
+                <i data-lucide="info" class="w-4 h-4"></i>
+                <span>{{ message }}</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="p-1 hover:opacity-70">
+                <i data-lucide="x" class="w-3.5 h-3.5"></i>
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <main class="flex-1">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-navy text-slate-400 text-sm mt-16 border-t border-navy-light">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-10 pb-10 border-b border-slate-700/50">
+                <div class="space-y-3 md:col-span-1">
+                    <div class="flex items-center gap-2 text-white">
+                        <div class="w-8 h-8 rounded-lg bg-brand-700 flex items-center justify-center">
+                            <i data-lucide="graduation-cap" class="w-4 h-4 text-white"></i>
+                        </div>
+                        <span class="font-heading font-bold text-base">ScholarVault</span>
+                    </div>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        A verified digital repository for defended university academic projects, research papers, and thesis materials.
+                    </p>
+                </div>
+
+                <div>
+                    <h4 class="font-semibold text-slate-200 text-xs uppercase tracking-wider mb-3">Navigation</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="{% url 'projects:list' %}" class="hover:text-white transition">Browse Projects</a></li>
+                        <li><a href="{% url 'departments:list' %}" class="hover:text-white transition">Departments</a></li>
+                        <li><a href="{% url 'projects:list' %}?sort=popular" class="hover:text-white transition">Popular Theses</a></li>
+                        <li><a href="{% url 'projects:upload' %}" class="hover:text-white transition">Faculty Upload</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="font-semibold text-slate-200 text-xs uppercase tracking-wider mb-3">Departments</h4>
+                    <ul class="space-y-2 text-sm">
+                        {% for dept in all_departments|slice:":5" %}
+                        <li><a href="{% url 'departments:detail' dept.slug %}" class="hover:text-white transition">{{ dept.name }}</a></li>
+                        {% empty %}
+                        <li><span class="text-slate-500">Computer Science</span></li>
+                        <li><span class="text-slate-500">Electrical Engineering</span></li>
+                        <li><span class="text-slate-500">Business Administration</span></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="font-semibold text-slate-200 text-xs uppercase tracking-wider mb-3">Payments</h4>
+                    <p class="text-slate-400 text-sm leading-relaxed mb-3">
+                        Secure transactions processed via Paystack with instant digital access upon purchase.
+                    </p>
+                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/60 border border-slate-700 text-emerald-400 text-xs font-medium">
+                        <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>
+                        Paystack Secured
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+                <p>&copy; 2026 ScholarVault. All rights reserved.</p>
+                <p>Built for university research excellence.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            if (menu) menu.classList.toggle('hidden');
+        }
+    </script>
+    <script src="{% static 'js/main.js' %}"></script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

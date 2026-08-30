@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}{{ department.name }} Projects | ScholarVault{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <nav class="breadcrumb">
+            <a href="{% url 'home' %}">Home</a>
+            <span>/</span>
+            <a href="{% url 'departments:list' %}">Departments</a>
+            <span>/</span>
+            <span>{{ department.name }}</span>
+        </nav>
+        <h1 class="page-header-title">{{ department.name }}</h1>
+        <p class="page-header-desc">{{ department.description|default:"Browse defended research projects and university dissertations from this faculty." }}</p>
+    </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    {% if materials %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {% for material in materials %}
+        <div class="card card-hover flex flex-col justify-between overflow-hidden group">
+            <div class="p-5 space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="badge badge-primary">{{ department.name }}</span>
+                    <span class="text-xs text-slate-400">{{ material.year_defended }}</span>
+                </div>
+                <a href="{% url 'projects:detail' material.pk %}" class="block">
+                    <h3 class="font-heading font-bold text-base text-navy group-hover:text-brand-700 transition leading-snug line-clamp-2">
+                        {{ material.title }}
+                    </h3>
+                </a>
+                <p class="text-sm text-slate-500 line-clamp-3 leading-relaxed">{{ material.abstract }}</p>
+            </div>
+            <div class="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+                <span class="text-base font-bold text-navy">₦{{ material.price|intcomma }}</span>
+                <div class="flex items-center gap-2">
+                    <a href="{% url 'projects:detail' material.pk %}" class="btn btn-secondary btn-sm">Preview</a>
+                    <a href="{% url 'payments:initiate' material.pk %}" class="btn btn-primary btn-sm">Buy</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card p-12 empty-state">
+        <h3 class="font-heading font-bold text-navy">No projects in {{ department.name }} yet</h3>
+        <p class="text-sm mt-1">Staff members can upload academic project documents for review.</p>
+        <a href="{% url 'projects:list' %}" class="btn btn-primary btn-sm mt-4">Browse All Projects</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
