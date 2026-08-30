@@ -1,18 +1,12 @@
-# Render Blueprint — deploy with: connect repo → New Blueprint → select render.yaml
-# Docs: https://render.com/docs/infrastructure-as-code
-
 services:
   - type: web
-    name: scholarvault
+    name: academic-projects-marketplace
+    startCommand: gunicorn config.wsgi:application
     runtime: docker
     dockerfilePath: ./Dockerfile
     dockerContext: .
     plan: free
     healthCheckPath: /
-    disk:
-      name: scholarvault-media
-      mountPath: /app/media
-      sizeGB: 1
     envVars:
       - key: DJANGO_SECRET_KEY
         generateValue: true
@@ -22,6 +16,16 @@ services:
         value: "False"
       - key: WEB_CONCURRENCY
         value: "2"
+      - key: USE_CLOUD_STORAGE
+        value: "True"
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_STORAGE_BUCKET_NAME
+        sync: false
+      - key: AWS_S3_ENDPOINT_URL
+        sync: false
       - key: DATABASE_URL
         fromDatabase:
           name: scholarvault-db
