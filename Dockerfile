@@ -7,21 +7,44 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# System deps for PyMuPDF and psycopg2
+# System dependencies for PyMuPDF, psycopg2, and reportlab
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libmupdf-dev \
     libpq-dev \
+    libxml2-dev \
+    libxslt1-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    libpng-dev \
     && rm -rf /var/lib/apt/lists/*
 
+# Install Python dependencies
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy application code
 COPY . .
 
-RUN mkdir -p /app/media /app/staticfiles \
+# Run database migrations during build
+RUN python manage.py migrate --noinput
+
+# Create superuser
+RUN echo "from django.contrib.auth import get_userModel; User = get_userModel(); User.objects.create_superuser('Admin', 'admin@example.com', 'Admin123')" | python manage.py shell
+
+# Create necessary directories for media and static files
+RUN mkdir -p /app/media/projects/full \
+    && mkdir -p /app/media/projects/preview \
+    && mkdir -p /app/staticfiles \
     && chmod +x /app/entrypoint.sh
 
+# Set proper permissions
+RUN chown -R root:root /app/media /app/staticfiles
+
 EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python manage.py check --database default || exit 1
 
 ENTRYPOINT ["/app/entrypoint.sh"]

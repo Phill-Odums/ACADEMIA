@@ -9,11 +9,19 @@ services:
       PORT: "8000"
       DATABASE_URL: postgres://postgres:postgres@db:5432/scholarvault
       DJANGO_DEBUG: "True"
+      WEB_CONCURRENCY: "2"
     volumes:
       - media_data:/app/media
+      - static_data:/app/staticfiles
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "manage.py", "check", "--database", "default"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   db:
     image: postgres:16-alpine
@@ -31,4 +39,5 @@ services:
 
 volumes:
   media_data:
+  static_data:
   pg_data:
