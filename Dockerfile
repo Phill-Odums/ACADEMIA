@@ -28,6 +28,7 @@ COPY . .
 
 # Run database migrations during build
 RUN python manage.py migrate --noinput
+RUN docker-compose exec web python seed_data.py
 
 # Create superuser
 RUN echo "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.create_superuser('Admin', 'admin@example.com', 'Admin123')" | python manage.py shell
