@@ -30,7 +30,7 @@ COPY . .
 RUN python manage.py migrate --noinput
 
 # Create superuser
-RUN echo "from django.contrib.auth import get_user_model; User = get_userModel(); User.objects.create_superuser('Admin', 'admin@example.com', 'Admin123')" | python manage.py shell
+RUN echo "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.create_superuser('Admin', 'admin@example.com', 'Admin123')" | python manage.py shell
 
 # Create necessary directories for media and static files
 RUN mkdir -p /app/media/projects/full \
