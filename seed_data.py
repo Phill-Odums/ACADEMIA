@@ -102,6 +102,7 @@ def create_seed_data():
     print(f"Created/Verified {Department.objects.count()} departments ({created_count} newly created).")
 
 
+
     print("\nDatabase seeded successfully!")
     print("Default Logins:")
     print("  Super Admin: username='admin' | password='admin123'")
