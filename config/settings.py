@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 
 import dj_database_url
 from dotenv import load_dotenv
+from django.core.exceptions import ImproperlyConfigured
 
 
 load_dotenv()
@@ -184,6 +185,11 @@ if DATABASE_URL:
         DATABASE_URL,
         conn_max_age=600,
         conn_health_checks=True,
+    )
+elif not DEBUG:
+    raise ImproperlyConfigured(
+        'DATABASE_URL must be set when DJANGO_DEBUG=False. '
+        'Configure the persistent Render PostgreSQL database before deploying.'
     )
 
 RENDER_EXTERNAL_HOSTNAME = os.getenv('RENDER_EXTERNAL_HOSTNAME')

@@ -191,7 +191,9 @@ App runs at [http://localhost:8000](http://localhost:8000) with PostgreSQL.
 
 ### Production notes
 
-- **Migrations** run automatically on container start via `entrypoint.sh`.
+- **Migrations** run automatically on container start via `entrypoint.sh`, against the linked Postgres database. They are not run while building the Docker image.
+- **User accounts** are stored in Postgres and are preserved across deployments. Do not delete or recreate the Render Postgres database; deploying a new image does not delete users, staff, purchases, or projects.
+- **Super admin and staff accounts** must be created from the Render Shell with `python manage.py createsuperuser` or through the application workflow. They are not created in the Dockerfile, because build-time data is temporary and is not the production database.
 - **Static files** are collected on each deploy; served by WhiteNoise.
 - **Media files** persist only if the Render disk is attached at `/app/media`.
 - Set `PAYSTACK_DEMO_MODE=False` in production for real payments.

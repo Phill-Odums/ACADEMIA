@@ -25,14 +25,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY . .
-
-# Run database migrations during build
-RUN python manage.py migrate --noinput
-
-
-# Create superuser
-RUN echo "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.create_superuser('Admin', 'admin@example.com', 'Admin123')" | python manage.py shell
-
 # Create necessary directories for media and static files
 RUN mkdir -p /app/media/projects/full \
     && mkdir -p /app/media/projects/preview \
