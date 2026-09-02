@@ -127,13 +127,13 @@ def preview_stream_view(request, pk):
     material = get_object_or_404(ProjectMaterial, pk=pk)
     
     # If preview file doesn't exist yet, try generating it
-    if not material.preview_file or not os.path.exists(material.preview_file.path):
+    if not material.preview_file or not material.preview_file.storage.exists(material.preview_file.name):
         generated = generate_preview_pdf(material)
         if generated:
             material.save()
 
-    if material.preview_file and os.path.exists(material.preview_file.path):
-        response = FileResponse(open(material.preview_file.path, 'rb'), content_type='application/pdf')
+    if material.preview_file and material.preview_file.storage.exists(material.preview_file.name):
+        response = FileResponse(material.preview_file.open('rb'), content_type='application/pdf')
         response['Content-Disposition'] = f'inline; filename="preview_{material.id}.pdf"'
         return response
     
@@ -162,19 +162,18 @@ def project_download_view(request, pk):
         messages.error(request, "You must purchase this academic material to download the full document.")
         return redirect('projects:detail', pk=material.pk)
 
-    if not material.file or not os.path.exists(material.file.path):
+    if not material.file or not material.file.storage.exists(material.file.name):
         raise Http404("The full project file was not found on the server.")
 
     # Record download log
     DownloadLog.objects.create(material=material, user=request.user)
 
-    file_path = material.file.path
-    content_type, _ = mimetypes.guess_type(file_path)
+    content_type, _ = mimetypes.guess_type(material.file.name)
     if not content_type:
         content_type = 'application/octet-stream'
 
-    filename = os.path.basename(file_path)
-    response = FileResponse(open(file_path, 'rb'), content_type=content_type)
+    filename = os.path.basename(material.file.name)
+    response = FileResponse(material.file.open('rb'), content_type=content_type)
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
 

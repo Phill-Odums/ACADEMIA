@@ -1,5 +1,7 @@
 import os
 import io
+import shutil
+import tempfile
 from pathlib import Path
 from django.core.files.base import ContentFile
 from django.conf import settings
@@ -12,13 +14,18 @@ def generate_preview_pdf(material_instance):
     if not material_instance.file:
         return False
 
-    file_path = material_instance.file.path
-    ext = os.path.splitext(file_path)[1].lower()
+    file_name = material_instance.file.name
+    ext = os.path.splitext(file_name)[1].lower()
     preview_bytes = None
 
     try:
+        # S3-compatible storage has no local .path. Work on a temporary copy.
+        with material_instance.file.open('rb') as source_file:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as temporary_file:
+                shutil.copyfileobj(source_file, temporary_file)
+                file_path = temporary_file.name
+
         if ext == '.pdf':
-            # Try pypdf first
             try:
                 import pypdf
                 reader = pypdf.PdfReader(file_path)
@@ -26,13 +33,12 @@ def generate_preview_pdf(material_instance):
                 pages_to_add = min(2, len(reader.pages))
                 for i in range(pages_to_add):
                     writer.add_page(reader.pages[i])
-                
+
                 buffer = io.BytesIO()
                 writer.write(buffer)
                 preview_bytes = buffer.getvalue()
                 buffer.close()
             except ImportError:
-                # Try fitz
                 import fitz
                 doc = fitz.open(file_path)
                 num_pages = min(2, len(doc))
@@ -43,7 +49,6 @@ def generate_preview_pdf(material_instance):
                 doc.close()
 
         elif ext in ['.docx', '.doc']:
-            # Try reading docx text
             full_text = ""
             try:
                 import docx
@@ -117,6 +122,9 @@ def generate_preview_pdf(material_instance):
 
     except Exception as e:
         print(f"Preview generation error: {e}")
+    finally:
+        if 'file_path' in locals() and os.path.exists(file_path):
+            os.unlink(file_path)
 
     # Fallback to reportlab abstract sheet if needed
     if not preview_bytes:
@@ -143,7 +151,7 @@ def generate_preview_pdf(material_instance):
             return False
 
     if preview_bytes:
-        filename = f"preview_{material_instance.id or 'temp'}_{Path(file_path).stem}.pdf"
+        filename = f"preview_{material_instance.id or 'temp'}_{Path(file_name).stem}.pdf"
         material_instance.preview_file.save(filename, ContentFile(preview_bytes), save=False)
         return True
 

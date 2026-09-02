@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 set -e
 
+if [ -z "${DATABASE_URL:-}" ]; then
+    echo "ERROR: DATABASE_URL is not configured on this Render web service."
+    echo "Link the persistent Postgres database to the service before starting the app."
+    exit 1
+fi
+
 echo "Running database migrations..."
 python manage.py migrate --noinput
 python seed_data.py
